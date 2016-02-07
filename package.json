@@ -1,0 +1,29 @@
+{
+  "name": "@exponent/sentry-utils",
+  "version": "0.1.0",
+  "description": "Utilities for working with Sentry in an ExponentJS Experience",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/exponentjs/sentry-utils.git"
+  },
+  "bin": {
+    "publish-sentry-release": "./scripts/publish-sentry-release"
+  },
+  "keywords": [
+    "sentry",
+    "exponent",
+    "react-native",
+    "ios",
+    "android"
+  ],
+  "author": "Adam Miskiewicz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/exponentjs/sentry-utils/issues"
+  },
+  "homepage": "https://github.com/exponentjs/sentry-utils#readme",
+  "dependencies": {
+    "raven-js": "^2.1.0"
+  }
+}

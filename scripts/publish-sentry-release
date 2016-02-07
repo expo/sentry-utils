@@ -1,0 +1,211 @@
+#!/bin/sh
+
+require_clean_work_tree () {
+  # Update the index
+  git update-index -q --ignore-submodules --refresh
+  err=0
+
+  # Disallow unstaged changes in the working tree
+  if ! git diff-files --quiet --ignore-submodules --
+  then
+    echo >&2 "Cannot $1: you have unstaged changes."
+    git diff-files --name-status -r --ignore-submodules -- >&2
+    err=1
+  fi
+
+  # Disallow uncommitted changes in the index
+  if ! git diff-index --cached --quiet HEAD --ignore-submodules --
+  then
+    echo >&2 "Cannot $1: your index contains uncommitted changes."
+    git diff-index --cached --name-status -r --ignore-submodules HEAD -- >&2
+    err=1
+  fi
+
+  if [ $err = 1 ]
+  then
+    echo >&2 "Please commit or stash them prior to creating release."
+    exit 1
+  fi
+}
+
+get_package_version() {
+  echo $(cat package.json \
+  | grep version \
+  | head -1 \
+  | awk -F: '{ print $2 }' \
+  | sed 's/[",]//g' \
+  | tr -d '[[:space:]]')
+}
+
+bump_version () {
+  echo ""
+  select versionBumpType in "major" "minor" "patch"; do
+    case $versionBumpType in
+      major ) break;;
+      minor ) break;;
+      patch ) break;;
+    esac
+  done
+
+  echo "\nBumped package version to: $(npm version --no-git-tag-version $versionBumpType)"
+
+  sleep 2
+}
+
+upload_release_to_sentry () {
+  local RELEASE_ID=$1
+  local APP_NAME=$2
+  local SOURCE_MAP_URL=$3
+
+  echo "\nDeleting existing Sentry release for this version."
+  curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/" \
+    -k \
+    --progress-bar \
+    -u $SENTRY_API_KEY: \
+    -X DELETE > /dev/null
+
+  echo "Creating Sentry Release:"
+  # Creates the release
+  curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/" \
+    -k \
+    --progress-bar \
+    -u $SENTRY_API_KEY: \
+    -X POST \
+    -d "{\"version\": \"$RELEASE_ID\"}" \
+    -H 'Content-Type: application/json' > /dev/null
+
+  echo "\nUploading source to Sentry:"
+  # upload source
+  curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/files/" \
+    -k \
+    --progress-bar \
+    -u $SENTRY_API_KEY: \
+    -X POST \
+    -F file=@./.release/$PLATFORM/bundle \
+    -F name="/$APP_NAME.bundle" > /dev/null
+
+  echo "\nUploading source map to Sentry:"
+  # upload source map
+  curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/files/" \
+    -k \
+    --progress-bar \
+    -u $SENTRY_API_KEY: \
+    -X POST \
+    -F file=@./.release/$PLATFORM/map \
+    -F name="/$APP_NAME.map" > /dev/null
+}
+
+create_release () {
+  if [ "$SENTRY_API_KEY" == "" ]; then
+    echo "Must specify Sentry API Key."
+    exit 1;
+  fi
+
+  if [ "$PLATFORM" != 'ios' ] && [ "$PLATFORM" != 'android' ]; then
+    echo "Platform must be specified ('ios' or 'android')."
+    exit 1;
+  fi
+
+  if [ "$SENTRY_TEAM" == "" ] || [ "$SENTRY_PROJECT" == "" ]; then
+    echo "Must specify the Sentry team and project."
+    exit 1;
+  fi
+
+  echo "Checking for clean work tree..."
+  require_clean_work_tree 'create release'
+
+  echo "\nPublishing a release for '$PLATFORM' platform on the '$SENTRY_TEAM/$SENTRY_PROJECT' Sentry project..."
+
+  echo "\nPlease entry your XDE host port: \c"
+  read XDE_PORT
+
+  if [ "$XDE_PORT" == "" ]; then
+    echo "Must enter a port."
+    exit 1
+  fi
+
+  local CURRENT_PACKAGE_VERSION=$(get_package_version)
+  echo "\nCurrent version: v$CURRENT_PACKAGE_VERSION"
+
+  echo "Bump version?"
+  select yn in "Yes" "No"; do
+    case $yn in
+      Yes ) bump_version; break;;
+      No ) break;;
+    esac
+  done
+
+  local RELEASE_ID=$(get_package_version)
+
+  echo "\nReleasing $RELEASE_ID...";
+
+  mkdir -p "./.release/$PLATFORM"
+
+  echo "\nFetching build from XDE...(may take a while, due to minify)"
+  curl "http://localhost:$XDE_PORT/bundle?dev=false&minify=true" \
+    -k \
+    --progress-bar \
+    -o "./.release/$PLATFORM/bundle" \
+    -H "exponent-platform: $PLATFORM" > /dev/null
+
+  echo "\nFetching source map from XDE..."
+  curl "http://localhost:$XDE_PORT/map" \
+    -k \
+    --progress-bar \
+    -o "./.release/$PLATFORM/map" \
+    -H "exponent-platform: $PLATFORM" > /dev/null
+
+  echo "\nModifying bundle and source map..."
+
+  # make sure it just says "/APP_NAME.map" as the source map URL
+  perl -i -p -e's/\/\/# sourceMappingURL=\/(.*).map(.*)/\/\/# sourceMappingURL=\/$1.map/gm' ./.release/$PLATFORM/bundle
+
+  # remove pwd from source map
+  path_to_strip=$(pwd | sed -e 's/[]\/$*.^|[]/\\&/g')
+  perl -i -p -e"s/$path_to_strip\///gm" ./.release/$PLATFORM/map
+
+  local APP_NAME=$(cat ./.release/$PLATFORM/bundle | perl -n -e'/\/\/\#\ sourceMappingURL=\/(.*).map/ && print $1')
+  upload_release_to_sentry $RELEASE_ID $APP_NAME
+
+  rm -rf ./.release
+
+  echo "\n==============================================================="
+  echo "\nIf you change code between now and uploading to exp.host, be sure to run this script again!"
+
+  echo "--Fin"
+}
+
+usage () {
+  echo "usage: publish-sentry-release [[[-p platform ] [-t sentry team] [-P sentry project]] | [-h]]"
+}
+
+PLATFORM=
+SENTRY_TEAM=
+SENTRY_PROJECT=
+SENTRY_API_KEY=
+
+while [ "$1" != "" ]; do
+  case $1 in
+    -p | --platform )   shift
+                        PLATFORM=$1
+                        ;;
+    -t | --team )       shift
+                        SENTRY_TEAM=$1
+                        ;;
+    -P | --project )    shift
+                        SENTRY_PROJECT=$1
+                        ;;
+    -k | --api-key )    shift
+                        SENTRY_API_KEY=$1
+                        ;;
+    -h | --help )       usage
+                        exit
+                        ;;
+    * )                 usage
+                        exit 1
+                        ;;
+  esac
+  shift
+done
+
+create_release
