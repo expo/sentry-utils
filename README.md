@@ -46,4 +46,4 @@ publish-sentry-release \
 
 You'll be prompted for your XDE port -- this can be found in XDE in the project URL display.
 
-In addition, the script will ask you if you want to bump the version of your project (the version specified in your `package.json`). This is optional - but if you don't bump the version and there is an existing Sentry release with the same version number, the artifacts associated with that version will be overriden.
+In addition, the script will ask you if you want to bump the version of your project (the version specified in your `package.json`). This is optional - but if you don't bump the version and there is an existing Sentry release with the same version number, the artifacts associated with that version will be overridden.
