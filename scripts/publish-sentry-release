@@ -57,12 +57,23 @@ upload_release_to_sentry () {
   local APP_NAME=$2
   local SOURCE_MAP_URL=$3
 
-  echo "\nDeleting existing Sentry release for this version."
-  curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/" \
-    -k \
-    --progress-bar \
-    -u $SENTRY_API_KEY: \
-    -X DELETE > /dev/null
+  local releaseStatusCode=$(curl -o /dev/null --silent --head --write-out '%{http_code}' "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/")
+
+  if [ releaseStatusCode != '404' ]; then;
+    echo "Delete existing Sentry release?"
+    select yn in "Yes" "No"; do
+      case $yn in
+        Yes ) echo "\nDeleting existing Sentry release for this version."
+              curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/" \
+                -k \
+                --progress-bar \
+                -u $SENTRY_API_KEY: \
+                -X DELETE > /dev/null;
+              break;;
+        No ) break;;
+      esac
+    done
+  fi
 
   echo "Creating Sentry Release:"
   # Creates the release
