@@ -1,5 +1,7 @@
 /*global ErrorUtils:false*/
 
+import { Platform } from 'react-native';
+
 /**
  * ExponentJS Sentry Client/Plugin
  *
@@ -63,7 +65,11 @@ export default class ExponentSentryClient {
     ErrorUtils.setGlobalHandler((...args) => {
       var error = args[0];
       defaultHandler(...args);
-      this._Raven.captureException(error);
+      this._Raven.captureException(error, {
+        tags: {
+          os: Platform.OS,
+        },
+      });
     });
   }
 
