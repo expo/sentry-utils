@@ -169,7 +169,7 @@ create_release () {
 
   echo "\nFetching source map from XDE..."
   {
-    curl "http://localhost:$XDE_PORT/map" \
+    curl "http://localhost:$XDE_PORT/map?dev=false&minify=true&flattenSourceMap=true" \
       -k \
       -f \
       --progress-bar \
@@ -188,6 +188,9 @@ create_release () {
   # remove pwd from source map
   path_to_strip=$(pwd | sed -e 's/[]\/$*.^|[]/\\&/g')
   perl -i -p -e"s/$path_to_strip\///gm" ./.release/$PLATFORM/map
+
+  # remove query parameters from bundle filename in source map
+  perl -i -p -e"s/\\.bundle?[^\"]*/\\.bundle/gm" ./.release/$PLATFORM/map
 
   local APP_NAME=$(cat ./.release/$PLATFORM/bundle | perl -n -e'/\/\/\#\ sourceMappingURL=\/(.*).map/ && print $1')
   upload_release_to_sentry $RELEASE_ID $APP_NAME
