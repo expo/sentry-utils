@@ -3,6 +3,8 @@
 set -e
 
 require_clean_work_tree () {
+    return
+
   # Update the index
   git update-index -q --ignore-submodules --refresh
   err=0
