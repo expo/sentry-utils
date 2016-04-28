@@ -154,9 +154,13 @@ create_release () {
 
   mkdir -p "./.release/$PLATFORM"
 
+  local BASE_URL=$(\
+      curl -k -f -H "exponent-platform: $PLATFORM" "http://localhost:$XDE_PORT" \
+          | sed "s/.*\"\(http.*\)\.bundle.*/\1/g")
+
   echo "\nFetching build from XDE...(may take a while, due to minify)"
   {
-    curl "http://localhost:$XDE_PORT/bundle?dev=false&minify=true" \
+      curl "$BASE_URL.bundle?platform=$PLATFORM&dev=false&hot=false&minify=true" \
       -k \
       -f \
       --progress-bar \
@@ -169,7 +173,7 @@ create_release () {
 
   echo "\nFetching source map from XDE..."
   {
-    curl "http://localhost:$XDE_PORT/map?dev=false&minify=true&flattenSourceMap=true" \
+    curl "$BASE_URL.map?platform=$PLATFORM&dev=false&hot=false&minify=true&flattenSourceMap=true" \
       -k \
       -f \
       --progress-bar \
