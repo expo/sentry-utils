@@ -14,14 +14,37 @@ import { Platform } from 'react-native';
  * ExponentSentryClient.setupSentry([SENTRY DSN], [RELEASE], [EXPERIENCE ENTRY FILE])
  * ```
  */
+
+let sentryClient;
+
 export default class ExponentSentryClient {
-  static setupSentry(dsn, release, mainEntry) {
+  static setupSentry(dsn, release, mainEntry, serverName = 'Not specified') {
     if (__DEV__) {
        return false;
     }
 
-    const sentryClient = new ExponentSentryClient();
-    return sentryClient.install(dsn, release, mainEntry);
+    sentryClient = new ExponentSentryClient();
+    return sentryClient.install(dsn, release, mainEntry, serverName);
+  }
+
+  static getInstance() {
+    return sentryClient;
+  }
+
+  static setUserContext(options) {
+    if (sentryClient) {
+      sentryClient.setUserContext(options);
+    } else {
+      console.log(`Sentry setUserContext: ${JSON.stringify(options)}`);
+    }
+  }
+
+  static logWarning(message, info={}) {
+    if (sentryClient) {
+      sentryClient.logWarning(message, info);
+    } else {
+      console.log(`Warning for Sentry: ${message}, ${JSON.stringify(info)}`);
+    }
   }
 
   constructor() {
@@ -30,7 +53,7 @@ export default class ExponentSentryClient {
     this._initPlugin();
   }
 
-  install(dsn, release, mainEntry) {
+  install(dsn, release, mainEntry, serverName = 'Not specified') {
     this._mainEntry = mainEntry;
     // self.addEventListener('unhandledrejection', (err) => {
     //   Raven.captureException(err);
@@ -38,7 +61,23 @@ export default class ExponentSentryClient {
 
     // TODO @skevy handle Promise rejection tracking
 
-    return this._Raven.config(dsn, { release }).install();
+    return this._Raven.config(dsn, { release, serverName }).install();
+  }
+
+  setUserContext(options) {
+    try {
+      this._Raven && this._Raven.setUserContext(options);
+    } catch(e) {
+      console.log('setUserContext on sentry-utils threw an error');
+    }
+  }
+
+  logWarning(message, info={}) {
+    try {
+      this._Raven && this._Raven.captureMessage(message, {extra: info});
+    } catch(e) {
+      console.log('logWarning on sentry-utils threw an error');
+    }
   }
 
   _initPlugin() {
@@ -62,12 +101,17 @@ export default class ExponentSentryClient {
       ErrorUtils.getGlobalHandler() ||
       ErrorUtils._globalHandler;
 
+    let osDetails = Platform.OS;
+    if (Platform.Version) {
+      osDetails += ` ${Platform.Version}`;
+    }
+
     ErrorUtils.setGlobalHandler((...args) => {
       var error = args[0];
       defaultHandler(...args);
       this._Raven.captureException(error, {
         tags: {
-          os: Platform.OS,
+          os: osDetails,
         },
       });
     });
