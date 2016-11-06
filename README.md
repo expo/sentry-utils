@@ -1,8 +1,6 @@
 Exponent Sentry Utilities
 =========================
 
-**Note: Please don't use this right now. Very experimental and possibly broken.**
-
 This package performs two main functions:
 
 * Provides `ExponentSentryClient`, which allows an application to easily set itself up to send any uncaught errors to Sentry (https://getsentry.com).
