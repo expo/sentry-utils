@@ -61,7 +61,7 @@ upload_release_to_sentry () {
   local APP_NAME=$2
   local SOURCE_MAP_URL=$3
 
-  local releaseStatusCode=$(curl -o /dev/null --silent --head --write-out '%{http_code}' "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/")
+  local releaseStatusCode=$(curl -o /dev/null --silent --write-out '%{http_code}' -u $SENTRY_API_KEY: "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/")
 
   if [ "$releaseStatusCode" != "404" ]; then
     echo "Delete existing Sentry release?"
@@ -188,17 +188,18 @@ create_release () {
 
   echo "\nModifying bundle and source map..."
 
+  local APP_NAME=$(cat ./.release/$PLATFORM/bundle | perl -n -e'/\/\/# sourceMappingURL=(\/.*)?\/(.*).map/ && print $2')
+
   # make sure it just says "/APP_NAME.map" as the source map URL
-  perl -i -p -e's/\/\/# sourceMappingURL=\/(.*).map(.*)/\/\/# sourceMappingURL=\/$1.map/gm' ./.release/$PLATFORM/bundle
+  perl -i -p -e"s/\/\/# sourceMappingURL=\/(.*).map(.*)/\/\/# sourceMappingURL=\/$APP_NAME.map/gm" ./.release/$PLATFORM/bundle
 
   # remove pwd from source map
-  path_to_strip=$(pwd | sed -e 's/[]\/$*.^|[]/\\&/g')
-  perl -i -p -e"s/$path_to_strip\///gm" ./.release/$PLATFORM/map
+  # path_to_strip=$(pwd | sed -e 's/[]\/$*.^|[]/\\&/g')
+  # perl -i -p -e"s/$path_to_strip\///gm" ./.release/$PLATFORM/map
 
   # remove query parameters from bundle filename in source map
   perl -i -p -e"s/\\.bundle?[^\"]*/\\.bundle/gm" ./.release/$PLATFORM/map
 
-  local APP_NAME=$(cat ./.release/$PLATFORM/bundle | perl -n -e'/\/\/\#\ sourceMappingURL=\/(.*).map/ && print $1')
   upload_release_to_sentry $RELEASE_ID $APP_NAME
 
   rm -rf ./.release
@@ -243,4 +244,3 @@ while [ "$1" != "" ]; do
 done
 
 create_release
-
