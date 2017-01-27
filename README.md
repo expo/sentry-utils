@@ -8,7 +8,8 @@ This package performs two main functions:
 
 ### Sentry Client
 
-To use the Sentry client, simply insert the following in `AppRegister.registerComponent(...)`:
+To use the Sentry client, register you need to first configure it your
+API key and app information.
 
 ```javascript
 ExponentSentryClient.setupSentry([SENTRY DSN], [RELEASE], [EXPERIENCE ENTRY FILE])
@@ -19,15 +20,12 @@ ExponentSentryClient.setupSentry([SENTRY DSN], [RELEASE], [EXPERIENCE ENTRY FILE
 Example usage:
 
 ```javascript
-AppRegistry.registerComponent('main', () => {
-  const packageJSON = require('./package.json');
-  ExponentSentryClient.setupSentry(
-    `https://[api key here]@app.getsentry.com/[project id]`,
-    packageJSON.version,
-    packageJSON.main,
-  );
-  return App;
-});
+const packageJSON = require('./package.json');
+ExponentSentryClient.setupSentry(
+  `https://[api key here]@app.getsentry.com/[project id]`,
+  packageJSON.version,
+  packageJSON.main,
+);
 ```
 
 ### "Publish Sentry Release" Script
