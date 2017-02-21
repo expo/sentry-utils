@@ -4,18 +4,17 @@ Exponent Sentry Utilities
 This package performs two main functions:
 
 * Provides `ExponentSentryClient`, which allows an application to easily set itself up to send any uncaught errors to Sentry (https://getsentry.com).
-* Provides a script -- `publish-sentry-release` -- that will fetch the current JavaScript bundle and source map for an Exponent experience from XDE, and upload those artifacts to Sentry to allow for symbolication of crash reports.
+* Provides a script -- `publish-sentry-release` -- that will fetch the current JavaScript bundle and source map for an Exponent experience from XDE or `exp`, and upload those artifacts to Sentry to allow for symbolication of crash reports.
 
 ### Sentry Client
 
-To use the Sentry client, register you need to first configure it your
-API key and app information.
+Set up the client as follows during the initialization of your app:
 
 ```javascript
 ExponentSentryClient.setupSentry([SENTRY DSN], [RELEASE], [EXPERIENCE ENTRY FILE])
 ```
 
-`RELEASE` should be a version number or Git commit SHA that identifies a new Sentry release.
+A good place to do this is in the `constructor` of your root component. `RELEASE` should be a version number or Git commit SHA that identifies a new Sentry release.
 
 Example usage:
 
@@ -28,6 +27,8 @@ ExponentSentryClient.setupSentry(
 );
 ```
 
+Before using this for the first time you will need to publish at least one release as shown below.
+
 ### "Publish Sentry Release" Script
 
 To upload a new release:
@@ -37,8 +38,10 @@ publish-sentry-release \
   --platform [ios|android] \
   --team [SENTRY TEAM] \
   --project [SENTRY PROJECT] \
-  --api-key [SENTRY API KEY]
+  --auth-token [SENTRY AUTH TOKEN]
 ```
+
+You can find or generate your Sentry auth token [on this page](https://docs.sentry.io/api/auth/).
 
 You'll be prompted for your XDE port -- this can be found in XDE in the project URL display.
 
