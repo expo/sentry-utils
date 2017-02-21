@@ -61,7 +61,7 @@ upload_release_to_sentry () {
   local APP_NAME=$2
   local SOURCE_MAP_URL=$3
 
-  local releaseStatusCode=$(curl -o /dev/null --silent --write-out '%{http_code}' -u $SENTRY_API_KEY: "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/")
+  local releaseStatusCode=$(curl -o /dev/null --silent --write-out '%{http_code}' -H "Authorization: Bearer $SENTRY_API_KEY" "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/")
 
   if [ "$releaseStatusCode" != "404" ]; then
     echo "Delete existing Sentry release?"
@@ -71,7 +71,7 @@ upload_release_to_sentry () {
               curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/" \
                 -k \
                 --progress-bar \
-                -u $SENTRY_API_KEY: \
+                -H "Authorization: Bearer $SENTRY_API_KEY" \
                 -X DELETE > /dev/null;
               break;;
         No ) break;;
@@ -84,7 +84,7 @@ upload_release_to_sentry () {
   curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/" \
     -k \
     --progress-bar \
-    -u $SENTRY_API_KEY: \
+    -H "Authorization: Bearer $SENTRY_API_KEY" \
     -X POST \
     -d "{\"version\": \"$RELEASE_ID\"}" \
     -H 'Content-Type: application/json' > /dev/null
@@ -94,7 +94,7 @@ upload_release_to_sentry () {
   curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/files/" \
     -k \
     --progress-bar \
-    -u $SENTRY_API_KEY: \
+    -H "Authorization: Bearer $SENTRY_API_KEY" \
     -X POST \
     -F file=@./.release/$PLATFORM/bundle \
     -F name="/$APP_NAME.bundle" > /dev/null
@@ -104,7 +104,7 @@ upload_release_to_sentry () {
   curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/files/" \
     -k \
     --progress-bar \
-    -u $SENTRY_API_KEY: \
+    -H "Authorization: Bearer $SENTRY_API_KEY" \
     -X POST \
     -F file=@./.release/$PLATFORM/map \
     -F name="/$APP_NAME.map" > /dev/null
