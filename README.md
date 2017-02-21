@@ -41,7 +41,7 @@ publish-sentry-release \
   --auth-token [SENTRY AUTH TOKEN]
 ```
 
-You can find or generate your Sentry auth token [on this page](https://docs.sentry.io/api/auth/).
+Find out about your Sentry auth token [on this page](https://docs.sentry.io/api/auth/).
 
 You'll be prompted for your XDE port -- this can be found in XDE in the project URL display.
 
