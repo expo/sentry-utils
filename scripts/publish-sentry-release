@@ -61,7 +61,7 @@ upload_release_to_sentry () {
   local APP_NAME=$2
   local SOURCE_MAP_URL=$3
 
-  local releaseStatusCode=$(curl -o /dev/null --silent --write-out '%{http_code}' -H "Authorization: Bearer $SENTRY_API_KEY" "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/")
+  local releaseStatusCode=$(curl -o /dev/null --silent --write-out '%{http_code}' -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/")
 
   if [ "$releaseStatusCode" != "404" ]; then
     echo "Delete existing Sentry release?"
@@ -71,7 +71,7 @@ upload_release_to_sentry () {
               curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/" \
                 -k \
                 --progress-bar \
-                -H "Authorization: Bearer $SENTRY_API_KEY" \
+                -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
                 -X DELETE > /dev/null;
               break;;
         No ) break;;
@@ -84,7 +84,7 @@ upload_release_to_sentry () {
   curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/" \
     -k \
     --progress-bar \
-    -H "Authorization: Bearer $SENTRY_API_KEY" \
+    -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
     -X POST \
     -d "{\"version\": \"$RELEASE_ID\"}" \
     -H 'Content-Type: application/json' > /dev/null
@@ -94,7 +94,7 @@ upload_release_to_sentry () {
   curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/files/" \
     -k \
     --progress-bar \
-    -H "Authorization: Bearer $SENTRY_API_KEY" \
+    -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
     -X POST \
     -F file=@./.release/$PLATFORM/bundle \
     -F name="/$APP_NAME.bundle" > /dev/null
@@ -104,15 +104,15 @@ upload_release_to_sentry () {
   curl "https://app.getsentry.com/api/0/projects/$SENTRY_TEAM/$SENTRY_PROJECT/releases/$RELEASE_ID/files/" \
     -k \
     --progress-bar \
-    -H "Authorization: Bearer $SENTRY_API_KEY" \
+    -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
     -X POST \
     -F file=@./.release/$PLATFORM/map \
     -F name="/$APP_NAME.map" > /dev/null
 }
 
 create_release () {
-  if [ "$SENTRY_API_KEY" == "" ]; then
-    echo >&2 "Must specify Sentry API Key."
+  if [ "$SENTRY_AUTH_TOKEN" == "" ]; then
+    echo >&2 "Must specify Sentry authentication token."
     exit 1;
   fi
 
@@ -211,13 +211,13 @@ create_release () {
 }
 
 usage () {
-  echo "usage: publish-sentry-release [[[-p platform ] [-t sentry team] [-P sentry project]] | [-h]]"
+  echo "usage: publish-sentry-release [[[-p platform ] [-t sentry team] [-P sentry project] [-k sentry auth token]] | [-h]]"
 }
 
 PLATFORM=
 SENTRY_TEAM=
 SENTRY_PROJECT=
-SENTRY_API_KEY=
+SENTRY_AUTH_TOKEN=
 
 while [ "$1" != "" ]; do
   case $1 in
@@ -230,8 +230,8 @@ while [ "$1" != "" ]; do
     -P | --project )    shift
                         SENTRY_PROJECT=$1
                         ;;
-    -k | --api-key )    shift
-                        SENTRY_API_KEY=$1
+    -k | --auth-token ) shift
+                        SENTRY_AUTH_TOKEN=$1
                         ;;
     -h | --help )       usage
                         exit
