@@ -1,6 +1,6 @@
 {
   "name": "@exponent/sentry-utils",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Utilities for working with Sentry in an ExponentJS Experience",
   "main": "index.js",
   "repository": {
