@@ -3,27 +3,27 @@
 import { Platform } from 'react-native';
 
 /**
- * ExponentJS Sentry Client/Plugin
+ * Expo Sentry Client/Plugin
  *
- * Configures Sentry for usage in an ExponentJS Experience
+ * Configures Sentry for usage in an Expo Experience
  *
  * Usage:
  *
  * ```
- * import ExponentSentryClient from '@exponentjs/sentry-utils';
- * ExponentSentryClient.setupSentry([SENTRY DSN], [RELEASE], [EXPERIENCE ENTRY FILE])
+ * import ExpoSentryClient from '@expo/sentry-utils';
+ * ExpoSentryClient.setupSentry([SENTRY DSN], [RELEASE], [EXPERIENCE ENTRY FILE])
  * ```
  */
 
 let sentryClient;
 
-export default class ExponentSentryClient {
+export default class ExpoSentryClient {
   static setupSentry(dsn, release, mainEntry, serverName = 'Not specified') {
     if (__DEV__) {
        return false;
     }
 
-    sentryClient = new ExponentSentryClient();
+    sentryClient = new ExpoSentryClient();
     return sentryClient.install(dsn, release, mainEntry, serverName);
   }
 

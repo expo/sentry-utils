@@ -1,17 +1,17 @@
-Exponent Sentry Utilities
-=========================
+Expo Sentry Utilities
+=====================
 
 This package performs two main functions:
 
-* Provides `ExponentSentryClient`, which allows an application to easily set itself up to send any uncaught errors to Sentry (https://getsentry.com).
-* Provides a script -- `publish-sentry-release` -- that will fetch the current JavaScript bundle and source map for an Exponent experience from XDE or `exp`, and upload those artifacts to Sentry to allow for symbolication of crash reports.
+* Provides `ExpoSentryClient`, which allows an application to easily set itself up to send any uncaught errors to Sentry (https://getsentry.com).
+* Provides a script -- `publish-sentry-release` -- that will fetch the current JavaScript bundle and source map for an Expo experience from XDE or `exp`, and upload those artifacts to Sentry to allow for symbolication of crash reports.
 
 ### Sentry Client
 
 Set up the client as follows during the initialization of your app:
 
 ```javascript
-ExponentSentryClient.setupSentry([SENTRY DSN], [RELEASE], [EXPERIENCE ENTRY FILE])
+ExpoSentryClient.setupSentry([SENTRY DSN], [RELEASE], [EXPERIENCE ENTRY FILE])
 ```
 
 A good place to do this is in the `constructor` of your root component. `RELEASE` should be a version number or Git commit SHA that identifies a new Sentry release.
@@ -20,7 +20,7 @@ Example usage:
 
 ```javascript
 const packageJSON = require('./package.json');
-ExponentSentryClient.setupSentry(
+ExpoSentryClient.setupSentry(
   `https://[api key here]@app.getsentry.com/[project id]`,
   packageJSON.version,
   packageJSON.main,
