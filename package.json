@@ -24,6 +24,6 @@
   },
   "homepage": "https://github.com/exponentjs/sentry-utils#readme",
   "dependencies": {
-    "raven-js": "^2.1.0"
+    "raven-js": "^3.12.0"
   }
 }
