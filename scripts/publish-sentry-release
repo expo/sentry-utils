@@ -131,13 +131,7 @@ create_release () {
 
   echo "\nPublishing a release for '$PLATFORM' platform on the '$SENTRY_TEAM/$SENTRY_PROJECT' Sentry project..."
 
-  echo "\nPlease entry your XDE host port: \c"
-  read XDE_PORT
-
-  if [ "$XDE_PORT" == "" ]; then
-    echo >&2 "Must enter a port."
-    exit 1
-  fi
+  local XDE_PORT=$(exp url --localhost | grep localhost | sed 's/.*://')
 
   local CURRENT_PACKAGE_VERSION=$(get_package_version)
   echo "\nCurrent version: v$CURRENT_PACKAGE_VERSION"
