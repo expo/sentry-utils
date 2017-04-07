@@ -219,10 +219,10 @@ while [ "$1" != "" ]; do
                         PLATFORM=$1
                         ;;
     -t | --team )       shift
-                        SENTRY_TEAM=$1
+                        SENTRY_TEAM=${1// /-}
                         ;;
     -P | --project )    shift
-                        SENTRY_PROJECT=$1
+                        SENTRY_PROJECT=${1// /-}
                         ;;
     -k | --auth-token ) shift
                         SENTRY_AUTH_TOKEN=$1
