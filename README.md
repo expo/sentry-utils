@@ -8,7 +8,7 @@ This package performs two main functions:
 
 ### Installation
 Run `npm install --save @expo/sentry-utils` or `yarn add @expo/sentry-utils` to
-install and add to your `package.json`.
+install and add to your `package.json`. This also installs `raven-js`.
 
 ### Sentry Client
 
@@ -23,12 +23,20 @@ A good place to do this is in the `constructor` of your root component. `RELEASE
 Example usage:
 
 ```javascript
+import ExpoSentryClient from '@expo/sentry-utils';
 const packageJSON = require('./package.json');
 ExpoSentryClient.setupSentry(
   `https://[api key here]@app.getsentry.com/[project id]`,
   packageJSON.version,
   packageJSON.main,
 );
+
+// send message
+ExpoSentryClient.logWarning(new Error('Testing sentry!'));
+
+// send exception
+const Raven = require('raven-js');
+Raven.captureException(new Error('Testing Sentry!'));
 ```
 
 Before using this for the first time you will need to publish at least one release as shown below.
