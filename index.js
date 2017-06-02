@@ -39,11 +39,14 @@ export default class ExpoSentryClient {
     }
   }
 
-  static logWarning(message, info={}) {
+  static logWarning(message, info) {
     if (sentryClient) {
       sentryClient.logWarning(message, info);
     } else {
-      console.log(`Warning for Sentry: ${message}, ${JSON.stringify(info)}`);
+      if (typeof info === 'object' && info)
+        console.log(`Warning for Sentry: ${message}, ${JSON.stringify(info)}`);
+      else
+        console.log(`Warning for Sentry: ${message}`);
     }
   }
 
@@ -66,15 +69,18 @@ export default class ExpoSentryClient {
 
   setUserContext(options) {
     try {
-      this._Raven && this._Raven.setUserContext(options);
+      this._Raven.setUserContext(options);
     } catch(e) {
       console.log('setUserContext on sentry-utils threw an error');
     }
   }
 
-  logWarning(message, info={}) {
+  logWarning(message, info) {
     try {
-      this._Raven && this._Raven.captureMessage(message, {extra: info});
+      if (typeof info === 'object' && info)
+        this._Raven.captureMessage(message, {extra: info});
+      else
+        this._Raven.captureMessage(message);
     } catch(e) {
       console.log('logWarning on sentry-utils threw an error');
     }
