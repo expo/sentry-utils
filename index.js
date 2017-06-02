@@ -47,6 +47,21 @@ export default class ExpoSentryClient {
     }
   }
 
+  static logException(err, info) {
+    if (sentryClient) {
+      sentryClient.logException(err, info);
+    } else {
+      if (typeof err === 'object' || typeof info !== 'object' || !info) {
+        err.info = info;
+        console.error(err);
+      }
+      else {
+        console.error(`Exception for Sentry: ${message}, ${JSON.stringify(info)}`);
+      }
+    }
+  }
+
+
   constructor() {
     const Raven = require('raven-js');
     this._Raven = Raven;
@@ -75,6 +90,15 @@ export default class ExpoSentryClient {
   logWarning(message, info={}) {
     try {
       this._Raven && this._Raven.captureMessage(message, {extra: info});
+    } catch(e) {
+      console.log('logWarning on sentry-utils threw an error');
+    }
+  }
+
+  logException(err, info) {
+    try {
+      if (info) this._Raven.captureException(message, {extra: info});
+      else this._Raven.captureException(message);
     } catch(e) {
       console.log('logWarning on sentry-utils threw an error');
     }
